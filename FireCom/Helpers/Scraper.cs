@@ -40,11 +40,13 @@ namespace FireCom.Controllers
                     StringSplitOptions.RemoveEmptyEntries);
 
                 int counter = 0;
-
-                var ourIncident = new Incident {County = county == "wccca" ? 1 : 2};
+                var ourIncident = new Incident { County = county == "wccca" ? 1 : 2 };
+                
                 
                 foreach (string s in rawcalls)
                 {
+                    int thiscounter = rawcalls.Count();
+                    
 
                     // trim out trailing spaces and blank lines
                     string ourline = s.Trim();
@@ -55,6 +57,7 @@ namespace FireCom.Controllers
                     // delineates calls 
                     if (ourline.StartsWith("Call Type:"))
                     {
+                        counter = 0;
                         // This is the known start of a call 
                         // we may need to flush and / or write here
                     }
@@ -107,15 +110,17 @@ namespace FireCom.Controllers
                                 ourIncident.Station = ourline.Substring(0, 4);
 
                                 //TODO: Remove after construction
-                                _output = "About to save incident";
+                                
                                 SaveCall(ourIncident);
                                 //TODO: Find a better place for this
-                                //GetUnitTimes(Int32.Parse(ourIncident.WNumber));
+                                
+                                GetUnitTimes(Int32.Parse(ourIncident.WNumber));
                                 //GetUnitTimes(Int32.Parse(ourIncident.WNumber));
                                 break;
                         }
                     }
                     // increment master counter
+                    
                     counter++;
                 }
             }
@@ -123,6 +128,56 @@ namespace FireCom.Controllers
             {
                 Debug.WriteLine(firstfetchException.ToString());
             }
+        }
+
+        private void GetUnitTimes(int wNumber)
+        {
+            try
+            {
+                var webGet = new HtmlWeb();
+                DbStore ourDbStore = new DbStore();
+                // load wccca page
+                var document = webGet.Load("http://www.wccca.com/PITSv2/units.aspx?cn=" + wNumber);
+
+                // Get all tables in the document
+                HtmlNodeCollection tables = document.DocumentNode.SelectNodes("//table");
+
+                // Iterate all rows in the first table
+                HtmlNodeCollection rows = tables[0].SelectNodes(".//tr");
+                //HtmlNode ourNode = tables[0].SelectSingleNode("//td").InnerText;
+
+                for (int i = 0; i < rows.Count; ++i)
+                {
+                    // build a dictionary with all our values 
+                    Dictionary<int, string> unitTimes = new Dictionary<int, string>();
+
+                    UnitTime ourUnitTime = new UnitTime();
+
+                    // Iterate all columns in this row
+                    HtmlNodeCollection cols = rows[i].SelectNodes(".//tr");
+
+                    
+
+                    for (int j = 0; j < cols.Count; ++j)
+                    {
+                        unitTimes.Add(j, cols[j].InnerText);
+                        ourDbStore.StoreUnitTime(unitTimes);
+                    }
+
+                    // write it to record
+                    
+                    //unitTimes.Clear();
+
+                }
+
+
+            }
+            catch (Exception getUnitTimesException)
+            {
+                Debug.WriteLine(getUnitTimesException.ToString());
+            }
+
+
         }
 
         public void GetLatLong()

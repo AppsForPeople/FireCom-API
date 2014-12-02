@@ -17,5 +17,11 @@
         public string Agency { get; set; }
         public string UnitList { get; set; }
         public bool IsActive { get; set; }
+
+        internal void FlushData()
+        {
+            
+
+        }
     }
 }

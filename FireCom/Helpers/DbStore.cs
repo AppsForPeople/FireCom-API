@@ -214,8 +214,9 @@ namespace FireCom.Helpers
         public void StoreUnitTime(Dictionary<int, string> ourUnitTimes)
         {
             // prepare data for storage
-
+            //TODO: parse this nonsense
             int wNumber = Int32.Parse(ourUnitTimes[0]);
+
         }
     }
 }
